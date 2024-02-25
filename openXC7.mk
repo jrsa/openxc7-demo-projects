@@ -17,10 +17,16 @@ PNR_DEBUG ?= # --verbose --debug
 BOARD ?= UNKNOWN
 JTAG_LINK ?= --board ${BOARD}
 
+BIT2BITBIN ?= bit2bitbin   # https://github.com/antmicro/zynq_bootloader/tree/master/bit2bitbin
+
 XDC ?= ${PROJECT}.xdc
 
 .PHONY: all
+ifeq ($(BITBIN),1)
+all: ${PROJECT}.bit.bin
+else
 all: ${PROJECT}.bit
+endif
 
 .PHONY: program
 program: ${PROJECT}.bit
@@ -45,9 +51,17 @@ ${PROJECT}.frames: ${PROJECT}.fasm
 ${PROJECT}.bit: ${PROJECT}.frames
 	xc7frames2bit --part_file ${PRJXRAY_DB_DIR}/${FAMILY}/${PART}/part.yaml --part_name ${PART} --frm_file $< --output_file $@
 
+ifeq ($(BITBIN),1)
+${PROJECT}.bit.bin: ${PROJECT}.bit
+	${BIT2BITBIN} $< $@
+endif
+
+
+
 .PHONY: clean
 clean:
 	@rm -f *.bit
+	@rm -f *.bit.bin
 	@rm -f *.frames
 	@rm -f *.fasm
 	@rm -f *.json
